@@ -23,9 +23,9 @@ class SmsController extends Controller
     public function send(Request $request)
     {
         $request->validate([
-            'message' => 'required|string|max:160',
+            'message'     => 'required|string|max:160',
             'filter_type' => 'required|in:all,block,pwd,senior',
-            'block_id' => 'required_if:filter_type,block|exists:blocks,id',
+            'block_id'    => 'nullable|required_if:filter_type,block|exists:blocks,id',
         ]);
 
         $query = Resident::query();
@@ -42,22 +42,40 @@ class SmsController extends Controller
                 break;
         }
 
-        $residents = $query->get();
+        $residents = $query->whereNotNull('contact_number_1')
+                           ->where('contact_number_1', '!=', '')
+                           ->get();
         $sentCount = 0;
+        $debugLogs = [];
 
         foreach ($residents as $resident) {
-            $success = $this->smsService->send(
+            $result = $this->smsService->send(
                 $resident->contact_number_1,
                 $request->message,
                 [
-                    'user_id' => Auth::id(),
-                    'filter_type' => $request->filter_type,
+                    'user_id'      => Auth::id(),
+                    'filter_type'  => $request->filter_type,
                     'filter_value' => $request->block_id ?? $request->filter_type,
                 ]
             );
-            if ($success) $sentCount++;
+
+            $debugLogs[] = [
+                'number'           => $resident->contact_number_1,
+                'success'          => $result['success'],
+                'http_status'      => $result['status_code'],
+                'semaphore_response' => $result['response'],
+            ];
+
+            if ($result['success']) $sentCount++;
         }
 
-        return back()->with('success', "SMS sent to {$sentCount} recipients.");
+        return back()
+            ->with('success', "SMS sent to {$sentCount} recipients.")
+            ->with('sms_debug', [
+                'residents_found' => $residents->count(),
+                'sent_count'      => $sentCount,
+                'numbers'         => $residents->pluck('contact_number_1')->toArray(),
+                'logs'            => $debugLogs,
+            ]);
     }
 }

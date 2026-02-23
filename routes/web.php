@@ -23,7 +23,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [RegisterController::class, 'register']);
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::get('/home', function () {
     if (Auth::check()) {
@@ -61,6 +61,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/residents/{resident}', [AdminResidentController::class, 'show'])->name('residents.show');
     Route::get('/residents/{resident}/edit', [AdminResidentController::class, 'edit'])->name('residents.edit');
     Route::put('/residents/{resident}', [AdminResidentController::class, 'update'])->name('residents.update');
+    Route::delete('/residents/{resident}', [AdminResidentController::class, 'destroy'])->name('residents.destroy');
 
     Route::get('/complaints', [AdminComplaintController::class, 'index'])->name('complaints.index');
     Route::get('/complaints/{complaint}', [AdminComplaintController::class, 'show'])->name('complaints.show');
@@ -82,5 +83,4 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/profile', [\App\Http\Controllers\Admin\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [\App\Http\Controllers\Admin\ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [\App\Http\Controllers\Admin\ProfileController::class, 'changePassword'])->name('profile.password');
-
 });

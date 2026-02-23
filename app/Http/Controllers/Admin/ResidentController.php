@@ -16,10 +16,10 @@ class ResidentController extends Controller
         $query = Resident::with(['block', 'user']);
 
         if ($request->search) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('first_name', 'like', "%{$request->search}%")
-                  ->orWhere('last_name', 'like', "%{$request->search}%")
-                  ->orWhere('resident_id', 'like', "%{$request->search}%");
+                    ->orWhere('last_name', 'like', "%{$request->search}%")
+                    ->orWhere('resident_id', 'like', "%{$request->search}%");
             });
         }
 
@@ -53,6 +53,15 @@ class ResidentController extends Controller
         return view('admin.residents.edit', compact('resident', 'blocks'));
     }
 
+    public function destroy(Resident $resident)
+    {
+        if ($resident->user) {
+            $resident->user->delete();
+        }
+        $resident->delete();
+        return redirect()->route('admin.residents.index')->with('success', 'Resident deleted successfully.');
+    }
+
     public function update(Request $request, Resident $resident)
     {
         $request->validate([
@@ -70,9 +79,15 @@ class ResidentController extends Controller
         ]);
 
         $resident->update($request->only([
-            'first_name', 'middle_name', 'last_name', 'address',
-            'contact_number_1', 'contact_number_2', 'birthdate',
-            'occupation', 'block_id',
+            'first_name',
+            'middle_name',
+            'last_name',
+            'address',
+            'contact_number_1',
+            'contact_number_2',
+            'birthdate',
+            'occupation',
+            'block_id',
         ]));
 
         $resident->update(['is_pwd' => $request->boolean('is_pwd')]);

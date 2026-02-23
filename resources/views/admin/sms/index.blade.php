@@ -44,7 +44,7 @@
             </div>
 
             <div class="p-4 bg-amber-50 border border-amber-100 rounded-lg text-sm text-amber-700">
-                <strong>Note:</strong> SMS will be sent via your Android SMS Gateway device.
+                <strong>Note:</strong> SMS will be sent via Semaphore SMS Gateway.
                 {{ config('sms.test_mode') ? 'Currently in TEST MODE — messages are logged only.' : 'Live mode active.' }}
             </div>
 
@@ -64,4 +64,22 @@ document.getElementById('sms_message').addEventListener('input', function() {
     document.getElementById('char_count').textContent = this.value.length;
 });
 </script>
+@if(session('sms_debug'))
+<script>
+    const debug = @json(session('sms_debug'));
+    console.log('%c SMS DEBUG ', 'background:#1d4ed8;color:white;font-weight:bold;padding:4px 8px;');
+    console.log('Residents found:', debug.residents_found);
+    console.log('Successfully sent:', debug.sent_count);
+    console.log('Numbers targeted:', debug.numbers);
+    console.group('Semaphore Per-Number Results');
+    debug.logs.forEach((log, i) => {
+        console.group(`#${i+1} → ${log.number}`);
+        console.log('Success:', log.success);
+        console.log('HTTP Status:', log.http_status);
+        console.log('Semaphore Response:', log.semaphore_response);
+        console.groupEnd();
+    });
+    console.groupEnd();
+</script>
+@endif
 @endsection
