@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Resident;
 use App\Http\Controllers\Controller;
 use App\Models\Complaint;
 use App\Models\Resident;
+use App\Models\User;
+use App\Notifications\ResidentActivityNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 
 class ComplaintController extends Controller
 {
@@ -52,13 +52,27 @@ class ComplaintController extends Controller
         $count = Complaint::whereYear('created_at', $year)->count() + 1;
         $complaintNumber = 'CMP-' . $year . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
 
-        Complaint::create([
+        $complaint = Complaint::create([
             'complaint_number' => $complaintNumber,
             'resident_id' => $resident->id,
             'description' => $request->description,
             'image_path' => $imagePath,
             'status' => 'submitted',
         ]);
+
+        $admins = User::where('role', 'admin')->get();
+        $hasUpload = !empty($imagePath);
+
+        foreach ($admins as $admin) {
+            $admin->notify(new ResidentActivityNotification([
+                'title' => $hasUpload ? 'New complaint with upload' : 'New complaint submitted',
+                'message' => $hasUpload
+                    ? "{$resident->full_name} submitted {$complaint->complaint_number} with an image upload."
+                    : "{$resident->full_name} submitted {$complaint->complaint_number}.",
+                'link' => route('admin.complaints.show', $complaint),
+                'category' => 'complaint',
+            ]));
+        }
 
         return redirect()->route('resident.complaints.index')
             ->with('success', 'Complaint submitted successfully.');

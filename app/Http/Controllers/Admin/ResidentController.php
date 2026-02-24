@@ -76,6 +76,7 @@ class ResidentController extends Controller
             'block_id' => 'required|exists:blocks,id',
             'is_pwd' => 'nullable|boolean',
             'email' => 'required|email|unique:users,email,' . $resident->user_id,
+            'new_password' => 'nullable|string|min:8|confirmed',
         ]);
 
         $resident->update($request->only([
@@ -96,6 +97,12 @@ class ResidentController extends Controller
             'name' => $request->first_name . ' ' . $request->last_name,
             'email' => $request->email,
         ]);
+
+        if ($request->filled('new_password')) {
+            $resident->user->update([
+                'password' => Hash::make($request->new_password),
+            ]);
+        }
 
         return redirect()->route('admin.residents.show', $resident)
             ->with('success', 'Resident updated successfully.');

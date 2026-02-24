@@ -14,6 +14,16 @@
     @include('layouts.partials.resident-sidebar')
 @endif
 
+@php
+    $adminNotifications = collect();
+    $unreadNotificationsCount = 0;
+
+    if (auth()->user()->isAdmin() && \Illuminate\Support\Facades\Schema::hasTable('notifications')) {
+        $adminNotifications = auth()->user()->notifications()->latest()->take(8)->get();
+        $unreadNotificationsCount = auth()->user()->unreadNotifications()->count();
+    }
+@endphp
+
 <div class="lg:pl-64">
  
     <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
@@ -30,13 +40,82 @@
         </h1>
  
         <div class="flex items-center gap-4">
+            @if(auth()->user()->isAdmin())
+                <div class="relative" id="notification-dropdown-wrapper">
+                    <button id="notification-toggle"
+                            class="relative flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            aria-label="Notifications">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </button>
+                    <span class="pointer-events-none absolute z-20 text-[15px] font-bold leading-none text-red-600"
+                          style="top: -12px; right: -4px;">
+                        {{ $unreadNotificationsCount > 99 ? '99+' : $unreadNotificationsCount }}
+                    </span>
+
+                    <div id="notification-dropdown"
+                         class="hidden fixed w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+                         style="z-index: 9999;">
+                        <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-800">Notifications</p>
+                                <p class="text-xs text-gray-500">{{ $unreadNotificationsCount }} unread</p>
+                            </div>
+                            @if($unreadNotificationsCount > 0)
+                                <form method="POST" action="{{ route('admin.notifications.read_all') }}">
+                                    @csrf
+                                    <button type="submit"
+                                            class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                        Mark all read
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+
+                        <div class="max-h-96 overflow-y-auto">
+                            @forelse($adminNotifications as $notification)
+                                @php
+                                    $data = $notification->data;
+                                    $isUnread = is_null($notification->read_at);
+                                @endphp
+                                <div class="px-4 py-3 border-b border-gray-100 last:border-b-0 {{ $isUnread ? 'bg-blue-50/40' : '' }}">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <a href="{{ $data['link'] ?? route('admin.dashboard') }}"
+                                           class="block min-w-0">
+                                            <p class="text-sm font-medium text-gray-800 truncate">{{ $data['title'] ?? 'Resident Activity' }}</p>
+                                            <p class="text-xs text-gray-600 mt-0.5">{{ $data['message'] ?? '' }}</p>
+                                            <p class="text-[11px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                        </a>
+                                        @if($isUnread)
+                                            <form method="POST" action="{{ route('admin.notifications.read', $notification->id) }}" class="shrink-0">
+                                                @csrf
+                                                <button type="submit"
+                                                        class="text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                                    Mark read
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="px-4 py-8 text-center text-sm text-gray-400">
+                                    No notifications yet.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="relative" id="profile-dropdown-wrapper">
                 <button id="profile-toggle"
                         class="flex items-center justify-center w-9 h-9 rounded-full bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                     {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                 </button>
 
-<div id="profile-dropdown"
+            <div id="profile-dropdown"
                      class="hidden fixed w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
                      style="z-index: 9999;">
                     <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
@@ -129,30 +208,54 @@
 
 <script>
     document.getElementById('sidebar-toggle')?.addEventListener('click', function() {
-        document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        document.getElementById('sidebar')?.classList.toggle('-translate-x-full');
     });
 
-    document.getElementById('profile-toggle').addEventListener('click', function() {
+    document.getElementById('profile-toggle')?.addEventListener('click', function() {
         const dropdown = document.getElementById('profile-dropdown');
+        if (!dropdown) return;
+
         const btn = this.getBoundingClientRect();
         const dropdownWidth = 224;
 
         dropdown.style.top = (btn.bottom + window.scrollY + 8) + 'px';
         dropdown.style.left = (btn.right + window.scrollX - dropdownWidth) + 'px';
         dropdown.classList.toggle('hidden');
+
+        document.getElementById('notification-dropdown')?.classList.add('hidden');
+    });
+
+    document.getElementById('notification-toggle')?.addEventListener('click', function () {
+        const dropdown = document.getElementById('notification-dropdown');
+        if (!dropdown) return;
+
+        const btn = this.getBoundingClientRect();
+        const dropdownWidth = 320;
+
+        dropdown.style.top = (btn.bottom + window.scrollY + 8) + 'px';
+        dropdown.style.left = (btn.right + window.scrollX - dropdownWidth) + 'px';
+        dropdown.classList.toggle('hidden');
+
+        document.getElementById('profile-dropdown')?.classList.add('hidden');
     });
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-            document.getElementById('logout-modal').classList.add('hidden');
-            document.getElementById('profile-dropdown').classList.add('hidden');
+            document.getElementById('logout-modal')?.classList.add('hidden');
+            document.getElementById('profile-dropdown')?.classList.add('hidden');
+            document.getElementById('notification-dropdown')?.classList.add('hidden');
         }
     });
 
     document.addEventListener('click', function (e) {
-        const wrapper = document.getElementById('profile-dropdown-wrapper');
-        if (wrapper && !wrapper.contains(e.target)) {
-            document.getElementById('profile-dropdown').classList.add('hidden');
+        const profileWrapper = document.getElementById('profile-dropdown-wrapper');
+        if (profileWrapper && !profileWrapper.contains(e.target)) {
+            document.getElementById('profile-dropdown')?.classList.add('hidden');
+        }
+
+        const notificationWrapper = document.getElementById('notification-dropdown-wrapper');
+        if (notificationWrapper && !notificationWrapper.contains(e.target)) {
+            document.getElementById('notification-dropdown')?.classList.add('hidden');
         }
     });
 </script>
