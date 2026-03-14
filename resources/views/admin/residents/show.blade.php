@@ -20,7 +20,7 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-100 p-6">
-        <div class="flex items-start gap-5">
+        <div class="flex flex-col sm:flex-row items-start gap-5">
             <div class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                 @if($resident->profile_photo)
                     <img src="{{ Storage::url($resident->profile_photo) }}" class="w-full h-full object-cover">
@@ -49,7 +49,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
                         <p class="text-xs text-gray-400 mb-0.5">Block</p>
                         <p class="text-sm font-medium text-gray-700">
@@ -144,7 +144,8 @@
                class="text-xs text-blue-600 hover:underline">View all</a>
         </div>
         @if($resident->complaints->count())
-        <table class="w-full text-sm">
+        <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[860px]">
             <thead>
                 <tr class="bg-gray-50">
                     <th class="text-left px-6 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Number</th>
@@ -174,6 +175,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         @else
         <div class="px-6 py-10 text-center text-sm text-gray-400">No complaints filed by this resident.</div>
         @endif
@@ -186,7 +188,8 @@
                class="text-xs text-blue-600 hover:underline">View all</a>
         </div>
         @if($resident->certificateRequests->count())
-        <table class="w-full text-sm">
+        <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[900px]">
             <thead>
                 <tr class="bg-gray-50">
                     <th class="text-left px-6 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Number</th>
@@ -219,6 +222,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         @else
         <div class="px-6 py-10 text-center text-sm text-gray-400">No certificate requests from this resident.</div>
         @endif

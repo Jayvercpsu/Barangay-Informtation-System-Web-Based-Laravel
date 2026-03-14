@@ -23,7 +23,7 @@
         <a href="{{ route('admin.reports.index') }}" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Reset</a>
     </form>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-2xl border border-gray-100 p-4 text-center">
             <p class="text-2xl font-bold text-blue-600">{{ $stats['total'] }}</p>
             <p class="text-xs text-gray-500 mt-1">Total Shown</p>
@@ -42,8 +42,8 @@
         </div>
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <table class="w-full text-sm">
+    <div class="bg-white rounded-2xl border border-gray-100 overflow-x-auto">
+        <table class="w-full text-sm min-w-[860px]">
             <thead>
                 <tr class="bg-gray-50 border-b border-gray-100">
                     <th class="text-left px-5 py-3 font-medium text-gray-600">Resident ID</th>

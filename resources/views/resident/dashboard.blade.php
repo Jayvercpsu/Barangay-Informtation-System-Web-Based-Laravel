@@ -5,7 +5,7 @@
 @section('content')
 <div class="space-y-6">
     <div class="bg-white rounded-2xl border border-gray-100 p-6">
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden">
                 @if($resident->profile_photo)
                     <img src="{{ Storage::url($resident->profile_photo) }}" class="w-full h-full object-cover">
@@ -83,13 +83,13 @@
         </div>
     </div>
 
-    <div class="flex gap-4">
+    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <a href="{{ route('resident.complaints.create') }}"
-           class="flex items-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium hover:bg-amber-600 transition-colors">
+           class="flex items-center justify-center gap-2 px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-medium hover:bg-amber-600 transition-colors">
             File a Complaint
         </a>
         <a href="{{ route('resident.certificates.create') }}"
-           class="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
+           class="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors">
             Request Certificate
         </a>
     </div>

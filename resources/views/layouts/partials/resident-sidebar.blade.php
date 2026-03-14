@@ -1,10 +1,20 @@
 <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-slate-900 text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-50">
-    <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-700">
-        <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-9 h-9 rounded">
-        <div>
-            <p class="text-sm font-bold leading-tight">Community Service Desk</p>
-            <p class="text-xs text-slate-400">Resident Portal</p>
+    <div class="flex items-center justify-between gap-3 px-6 py-5 border-b border-slate-700">
+        <div class="flex items-center gap-3 min-w-0">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-9 h-9 rounded">
+            <div>
+                <p class="text-sm font-bold leading-tight">Community Service Desk</p>
+                <p class="text-xs text-slate-400">Resident Portal</p>
+            </div>
         </div>
+        <button type="button"
+                data-sidebar-close
+                class="lg:hidden p-1.5 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                aria-label="Close sidebar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
     </div>
 
     <nav class="px-4 py-4 space-y-1">

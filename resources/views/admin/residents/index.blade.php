@@ -26,7 +26,8 @@
     </form>
 
     <div class="bg-white rounded-2xl border border-gray-100 overflow-visible">
-        <table class="w-full text-sm" style="position: relative;">
+        <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[920px]">
             <thead>
                 <tr class="bg-gray-50 border-b border-gray-100">
                     <th class="text-left px-5 py-3 font-medium text-gray-600">Resident ID</th>
@@ -53,8 +54,36 @@
                         </div>
                     </td> 
                     <td class="px-5 py-3">
-                        <div class="relative inline-block" x-data="{ open: false }" style="position: static;">
-                            <button @click="open = !open" @click.outside="open = false"
+                        <div class="relative inline-block"
+                             x-data="{
+                                open: false,
+                                menuX: 0,
+                                menuY: 0,
+                                toggle(event) {
+                                    const buttonRect = event.currentTarget.getBoundingClientRect();
+                                    const menuWidth = 160;
+                                    const menuHeight = 156;
+                                    const gap = 6;
+
+                                    const shouldOpenUp = (window.innerHeight - buttonRect.bottom) < menuHeight
+                                        && buttonRect.top > (window.innerHeight - buttonRect.bottom);
+
+                                    let x = buttonRect.left;
+                                    if (x + menuWidth > window.innerWidth - 8) {
+                                        x = buttonRect.right - menuWidth;
+                                    }
+                                    this.menuX = Math.max(8, Math.min(x, window.innerWidth - menuWidth - 8));
+
+                                    this.menuY = shouldOpenUp
+                                        ? Math.max(8, buttonRect.top - menuHeight - gap)
+                                        : Math.min(window.innerHeight - menuHeight - 8, buttonRect.bottom + gap);
+
+                                    this.open = !this.open;
+                                }
+                             }"
+                             @click.outside="open = false">
+                            <button type="button"
+                                    @click="toggle($event)"
                                     class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
@@ -64,9 +93,9 @@
                                  x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
                                  x-transition:leave="transition ease-in duration-75"
                                  x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-                                 class="fixed w-36 bg-white rounded-xl shadow-xl border border-gray-100 py-1 origin-top-right"
-                                 style="z-index: 9999;"
-                                 :style="`position: fixed; top: ${$el.parentElement.querySelector('button').getBoundingClientRect().bottom + 4}px; left: ${$el.parentElement.querySelector('button').getBoundingClientRect().right - 144}px;`">
+                                 x-cloak
+                                 class="fixed w-36 bg-white rounded-xl shadow-xl border border-gray-100 py-1 origin-top-left z-[9999]"
+                                 :style="`top:${menuY}px; left:${menuX}px;`">
                                 <a href="{{ route('admin.residents.show', $resident) }}"
                                    class="flex items-center gap-2 px-4 py-2 text-xs text-gray-700 hover:bg-gray-50">
                                     <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,6 +132,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
     {{ $residents->withQueryString()->links() }}
 </div>

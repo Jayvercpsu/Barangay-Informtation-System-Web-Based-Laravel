@@ -6,7 +6,9 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2">
         <div class="bg-white rounded-2xl border border-gray-100 p-5">
-            <div id="calendar"></div>
+            <div class="overflow-x-auto">
+                <div id="calendar" class="min-w-[640px] lg:min-w-0"></div>
+            </div>
         </div>
     </div>
 

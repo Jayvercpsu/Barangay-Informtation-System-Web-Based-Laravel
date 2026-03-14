@@ -4,9 +4,9 @@
 
 @section('content')
 <div class="space-y-5">
-    <form method="GET" class="flex gap-3 items-center">
+    <form method="GET" class="flex flex-wrap gap-3 items-center">
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search complaints..."
-               class="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+               class="flex-1 min-w-52 px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
         <select name="status" class="px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">All Status</option>
             <option value="submitted" {{ request('status') === 'submitted' ? 'selected' : '' }}>Submitted</option>
@@ -17,8 +17,8 @@
         <a href="{{ route('admin.complaints.index') }}" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">Reset</a>
     </form>
 
-    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <table class="w-full text-sm">
+    <div class="bg-white rounded-2xl border border-gray-100 overflow-x-auto">
+        <table class="w-full text-sm min-w-[860px]">
             <thead>
                 <tr class="bg-gray-50 border-b border-gray-100">
                     <th class="text-left px-5 py-3 font-medium text-gray-600">Complaint #</th>

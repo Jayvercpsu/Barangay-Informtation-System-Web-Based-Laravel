@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="space-y-6">
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
         @php
             $widgets = [
                 ['label' => 'Total Residents', 'value' => $totalResidents, 'color' => 'text-blue-600'],

@@ -5,7 +5,7 @@
 @section('content')
 <div class="max-w-3xl space-y-5">
     <div class="bg-white rounded-2xl border border-gray-100 p-6">
-        <div class="grid grid-cols-2 gap-4 mb-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
             <div>
                 <p class="text-xs text-gray-500 mb-1">Complaint Number</p>
                 <p class="font-mono font-semibold text-blue-600">{{ $complaint->complaint_number }}</p>

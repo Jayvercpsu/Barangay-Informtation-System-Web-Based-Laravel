@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="space-y-5">
-    <div class="flex justify-between items-center">
+    <div class="flex flex-wrap justify-between items-center gap-3">
         <p class="text-sm text-gray-500">{{ $requests->total() }} total requests</p>
         <a href="{{ route('resident.certificates.create') }}"
            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
@@ -12,8 +12,8 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <table class="w-full text-sm">
+    <div class="bg-white rounded-2xl border border-gray-100 overflow-x-auto">
+        <table class="w-full text-sm min-w-[700px]">
             <thead>
                 <tr class="bg-gray-50 border-b border-gray-100">
                     <th class="text-left px-5 py-3 font-medium text-gray-600">Request #</th>

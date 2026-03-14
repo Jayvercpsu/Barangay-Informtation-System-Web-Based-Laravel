@@ -14,6 +14,8 @@
     @include('layouts.partials.resident-sidebar')
 @endif
 
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden"></div>
+
 @php
     $adminNotifications = collect();
     $unreadNotificationsCount = 0;
@@ -24,9 +26,9 @@
     }
 @endphp
 
-<div class="lg:pl-64">
+<div class="lg:pl-64 min-h-screen">
  
-    <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <header class="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
          
         <button id="sidebar-toggle" class="lg:hidden text-gray-500 hover:text-gray-700">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,11 +37,11 @@
             </svg>
         </button>
  
-        <h1 class="text-lg font-semibold text-gray-800">
+        <h1 class="text-base sm:text-lg font-semibold text-gray-800 truncate">
             @yield('page-title', 'Dashboard')
         </h1>
  
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3 sm:gap-4">
             @if(auth()->user()->isAdmin())
                 <div class="relative" id="notification-dropdown-wrapper">
                     <button id="notification-toggle"
@@ -148,7 +150,7 @@
         </div>
     </header>
  
-    <main class="p-6">
+    <main class="p-4 sm:p-6 max-w-full overflow-x-hidden">
         @if(session('success'))
             <div class="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
                 {{ session('success') }}
@@ -207,8 +209,43 @@
 </div>
 
 <script>
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    function openSidebar() {
+        if (!sidebar) return;
+        sidebar.classList.remove('-translate-x-full');
+        sidebarOverlay?.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeSidebar() {
+        if (!sidebar) return;
+        sidebar.classList.add('-translate-x-full');
+        sidebarOverlay?.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
     document.getElementById('sidebar-toggle')?.addEventListener('click', function() {
-        document.getElementById('sidebar')?.classList.toggle('-translate-x-full');
+        if (!sidebar) return;
+        const isClosed = sidebar.classList.contains('-translate-x-full');
+        if (isClosed) {
+            openSidebar();
+        } else {
+            closeSidebar();
+        }
+    });
+
+    sidebarOverlay?.addEventListener('click', closeSidebar);
+    document.querySelectorAll('[data-sidebar-close]').forEach((button) => {
+        button.addEventListener('click', closeSidebar);
+    });
+
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 1024) {
+            sidebarOverlay?.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
     });
 
     document.getElementById('profile-toggle')?.addEventListener('click', function() {
@@ -241,6 +278,7 @@
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
+            closeSidebar();
             document.getElementById('logout-modal')?.classList.add('hidden');
             document.getElementById('profile-dropdown')?.classList.add('hidden');
             document.getElementById('notification-dropdown')?.classList.add('hidden');
