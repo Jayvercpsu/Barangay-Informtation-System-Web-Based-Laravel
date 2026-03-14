@@ -42,15 +42,35 @@ class SmsController extends Controller
                 break;
         }
 
-        $residents = $query->whereNotNull('contact_number_1')
-                           ->where('contact_number_1', '!=', '')
-                           ->get();
+        $residents = $query->get();
+
+        $targets = collect();
+        foreach ($residents as $resident) {
+            foreach ([$resident->contact_number_1, $resident->contact_number_2] as $number) {
+                $trimmed = trim((string) $number);
+                if ($trimmed !== '') {
+                    $targets->push([
+                        'resident_id' => $resident->id,
+                        'number' => $trimmed,
+                    ]);
+                }
+            }
+        }
+
+        $targets = $targets->unique('number')->values();
+
+        if ($targets->isEmpty()) {
+            return back()->withErrors([
+                'filter_type' => 'No cellphone numbers found for the selected filter.',
+            ])->withInput();
+        }
+
         $sentCount = 0;
         $debugLogs = [];
 
-        foreach ($residents as $resident) {
+        foreach ($targets as $target) {
             $result = $this->smsService->send(
-                $resident->contact_number_1,
+                $target['number'],
                 $request->message,
                 [
                     'user_id'      => Auth::id(),
@@ -60,22 +80,37 @@ class SmsController extends Controller
             );
 
             $debugLogs[] = [
-                'number'           => $resident->contact_number_1,
+                'number'           => $target['number'],
+                'normalized'       => $result['normalized_number'] ?? null,
                 'success'          => $result['success'],
                 'http_status'      => $result['status_code'],
-                'semaphore_response' => $result['response'],
+                'gateway_response' => $result['response'],
             ];
 
             if ($result['success']) $sentCount++;
         }
 
-        return back()
-            ->with('success', "SMS sent to {$sentCount} recipients.")
-            ->with('sms_debug', [
+        $totalTargets = $targets->count();
+        $failedCount = $totalTargets - $sentCount;
+        $debugPayload = [
                 'residents_found' => $residents->count(),
+                'targets_found'   => $targets->count(),
                 'sent_count'      => $sentCount,
-                'numbers'         => $residents->pluck('contact_number_1')->toArray(),
+                'failed_count'    => $failedCount,
+                'numbers'         => $targets->pluck('number')->toArray(),
                 'logs'            => $debugLogs,
-            ]);
+            ];
+
+        if ($sentCount === 0) {
+            return back()
+                ->withErrors([
+                    'filter_type' => "SMS sending failed for all {$totalTargets} recipients. Please verify gateway settings and recipient numbers.",
+                ])
+                ->with('sms_debug', $debugPayload);
+        }
+
+        return back()
+            ->with('success', "SMS sent to {$sentCount} of {$totalTargets} recipients.")
+            ->with('sms_debug', $debugPayload);
     }
 }
