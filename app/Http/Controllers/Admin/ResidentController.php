@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Block;
 use App\Models\Resident;
 use App\Models\User;
+use App\Notifications\ResidentActivityNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -35,7 +36,7 @@ class ResidentController extends Controller
             $query->whereNull('occupation');
         }
 
-        $residents = $query->latest()->paginate(20)->withQueryString();
+        $residents = $query->latest()->get();
         $blocks = Block::orderBy('block_number')->get();
 
         return view('admin.residents.index', compact('residents', 'blocks'));
@@ -103,6 +104,15 @@ class ResidentController extends Controller
                 'password' => Hash::make($request->new_password),
             ]);
         }
+
+        $resident->user->notify(new ResidentActivityNotification([
+            'title' => 'Account Update',
+            'message' => $request->filled('new_password')
+                ? 'Your profile details and password were updated by the barangay admin.'
+                : 'Your profile details were updated by the barangay admin.',
+            'link' => route('resident.profile.edit'),
+            'category' => 'account_update',
+        ]));
 
         return redirect()->route('admin.residents.show', $resident)
             ->with('success', 'Resident updated successfully.');

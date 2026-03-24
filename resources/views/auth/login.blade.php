@@ -32,6 +32,12 @@
                         <input type="checkbox" name="remember" class="rounded border-gray-300">
                         Remember me
                     </label>
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}"
+                           class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
+                            Forgot password?
+                        </a>
+                    @endif
                 </div>
                 <button type="submit"
                         class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors">

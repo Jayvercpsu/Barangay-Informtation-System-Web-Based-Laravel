@@ -20,7 +20,7 @@ class ComplaintController extends Controller
         /** @var Resident $resident */
         $resident = $user->resident;
 
-        $complaints = $resident->complaints()->latest()->paginate(10);
+        $complaints = $resident->complaints()->latest()->get();
 
         return view('resident.complaints.index', compact('complaints'));
     }

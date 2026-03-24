@@ -24,7 +24,7 @@
     </form>
 
     <div class="bg-white rounded-2xl border border-gray-100 overflow-x-auto">
-        <table class="w-full text-sm min-w-[820px]">
+        <table class="datatable w-full text-sm min-w-[820px]">
             <thead>
                 <tr class="bg-gray-50 border-b border-gray-100">
                     <th class="text-left px-5 py-3 font-medium text-gray-600">Request #</th>
@@ -62,6 +62,5 @@
             </tbody>
         </table>
     </div>
-    {{ $requests->links() }}
 </div>
 @endsection

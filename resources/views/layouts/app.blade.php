@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Community Service Desk') — Barangay Information System</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
 </head>
 <body class="bg-gray-50 font-sans antialiased">
 
@@ -17,15 +18,62 @@
 <div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden"></div>
 
 @php
-    $adminNotifications = collect();
+    $currentUser = auth()->user();
+    $notifications = collect();
     $unreadNotificationsCount = 0;
+    $markAllReadRoute = null;
+    $markReadRouteName = null;
 
-    if (auth()->user()->isAdmin() && \Illuminate\Support\Facades\Schema::hasTable('notifications')) {
-        $adminNotifications = auth()->user()->notifications()->latest()->take(8)->get();
-        $unreadNotificationsCount = auth()->user()->unreadNotifications()->count();
+    if (\Illuminate\Support\Facades\Schema::hasTable('notifications')) {
+        if ($currentUser->isAdmin() && \Illuminate\Support\Facades\Schema::hasTable('events')) {
+            $tomorrowDate = now()->addDay()->toDateString();
+
+            $existingReminderKeys = $currentUser->notifications()
+                ->latest()
+                ->take(200)
+                ->get()
+                ->pluck('data.reminder_key')
+                ->filter()
+                ->all();
+
+            $tomorrowEvents = \App\Models\Event::query()
+                ->whereDate('event_date', $tomorrowDate)
+                ->orderBy('event_time')
+                ->orderBy('title')
+                ->get();
+
+            foreach ($tomorrowEvents as $event) {
+                $reminderKey = "event-reminder-{$event->id}-{$tomorrowDate}";
+
+                if (in_array($reminderKey, $existingReminderKeys, true)) {
+                    continue;
+                }
+
+                $eventSchedule = $event->event_time
+                    ? 'at ' . \Carbon\Carbon::parse($event->event_time)->format('h:i A')
+                    : 'as an all-day event';
+                $eventLocation = $event->location ? " at {$event->location}" : '';
+
+                $currentUser->notify(new \App\Notifications\ResidentActivityNotification([
+                    'title' => 'Event Reminder: Tomorrow',
+                    'message' => "{$event->title} is scheduled tomorrow ({$event->event_date->format('M d, Y')}) {$eventSchedule}{$eventLocation}.",
+                    'link' => route('admin.events.index'),
+                    'category' => 'event_reminder',
+                    'reminder_key' => $reminderKey,
+                ]));
+
+                $existingReminderKeys[] = $reminderKey;
+            }
+        }
+
+        $notifications = $currentUser->notifications()->latest()->take(8)->get();
+        $unreadNotificationsCount = $currentUser->unreadNotifications()->count();
+        $markReadRouteName = $currentUser->isAdmin() ? 'admin.notifications.read' : 'resident.notifications.read';
+        $markAllReadRoute = $currentUser->isAdmin()
+            ? route('admin.notifications.read_all')
+            : route('resident.notifications.read_all');
     }
 @endphp
-
 <div class="lg:pl-64 min-h-screen">
  
     <header class="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
@@ -42,74 +90,74 @@
         </h1>
  
         <div class="flex items-center gap-3 sm:gap-4">
-            @if(auth()->user()->isAdmin())
-                <div class="relative" id="notification-dropdown-wrapper">
-                    <button id="notification-toggle"
-                            class="relative flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                            aria-label="Notifications">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                    </button>
+            <div class="relative" id="notification-dropdown-wrapper">
+                <button id="notification-toggle"
+                        class="relative flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        aria-label="Notifications">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                </button>
+                @if($unreadNotificationsCount > 0)
                     <span class="pointer-events-none absolute z-20 text-[15px] font-bold leading-none text-red-600"
                           style="top: -12px; right: -4px;">
                         {{ $unreadNotificationsCount > 99 ? '99+' : $unreadNotificationsCount }}
                     </span>
+                @endif
 
-                    <div id="notification-dropdown"
-                         class="hidden fixed w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
-                         style="z-index: 9999;">
-                        <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-gray-800">Notifications</p>
-                                <p class="text-xs text-gray-500">{{ $unreadNotificationsCount }} unread</p>
+                <div id="notification-dropdown"
+                     class="hidden fixed w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
+                     style="z-index: 9999;">
+                    <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-semibold text-gray-800">Notifications</p>
+                            <p class="text-xs text-gray-500">{{ $unreadNotificationsCount }} unread</p>
+                        </div>
+                        @if($unreadNotificationsCount > 0 && $markAllReadRoute)
+                            <form method="POST" action="{{ $markAllReadRoute }}">
+                                @csrf
+                                <button type="submit"
+                                        class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                    Mark all read
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+
+                    <div class="max-h-96 overflow-y-auto">
+                        @forelse($notifications as $notification)
+                            @php
+                                $data = $notification->data;
+                                $isUnread = is_null($notification->read_at);
+                            @endphp
+                            <div class="px-4 py-3 border-b border-gray-100 last:border-b-0 {{ $isUnread ? 'bg-blue-50/40' : '' }}">
+                                <div class="flex items-start justify-between gap-3">
+                                    <a href="{{ $data['link'] ?? ($currentUser->isAdmin() ? route('admin.dashboard') : route('resident.dashboard')) }}"
+                                       class="block min-w-0">
+                                        <p class="text-sm font-medium text-gray-800 truncate">{{ $data['title'] ?? 'System Update' }}</p>
+                                        <p class="text-xs text-gray-600 mt-0.5">{{ $data['message'] ?? '' }}</p>
+                                        <p class="text-[11px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
+                                    </a>
+                                    @if($isUnread && $markReadRouteName)
+                                        <form method="POST" action="{{ route($markReadRouteName, $notification->id) }}" class="shrink-0">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors">
+                                                Mark read
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </div>
-                            @if($unreadNotificationsCount > 0)
-                                <form method="POST" action="{{ route('admin.notifications.read_all') }}">
-                                    @csrf
-                                    <button type="submit"
-                                            class="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                                        Mark all read
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
-
-                        <div class="max-h-96 overflow-y-auto">
-                            @forelse($adminNotifications as $notification)
-                                @php
-                                    $data = $notification->data;
-                                    $isUnread = is_null($notification->read_at);
-                                @endphp
-                                <div class="px-4 py-3 border-b border-gray-100 last:border-b-0 {{ $isUnread ? 'bg-blue-50/40' : '' }}">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <a href="{{ $data['link'] ?? route('admin.dashboard') }}"
-                                           class="block min-w-0">
-                                            <p class="text-sm font-medium text-gray-800 truncate">{{ $data['title'] ?? 'Resident Activity' }}</p>
-                                            <p class="text-xs text-gray-600 mt-0.5">{{ $data['message'] ?? '' }}</p>
-                                            <p class="text-[11px] text-gray-400 mt-1">{{ $notification->created_at->diffForHumans() }}</p>
-                                        </a>
-                                        @if($isUnread)
-                                            <form method="POST" action="{{ route('admin.notifications.read', $notification->id) }}" class="shrink-0">
-                                                @csrf
-                                                <button type="submit"
-                                                        class="text-[11px] font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                                                    Mark read
-                                                </button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="px-4 py-8 text-center text-sm text-gray-400">
-                                    No notifications yet.
-                                </div>
-                            @endforelse
-                        </div>
+                        @empty
+                            <div class="px-4 py-8 text-center text-sm text-gray-400">
+                                No notifications yet.
+                            </div>
+                        @endforelse
                     </div>
                 </div>
-            @endif
+            </div>
 
             <div class="relative" id="profile-dropdown-wrapper">
                 <button id="profile-toggle"
@@ -199,7 +247,7 @@
             <form method="POST" action="{{ route('logout') }}" class="flex-1">
                 @csrf
                 <button type="submit"
-                        class="w-full px-4 py-2.5 bg-red-500 text-danger text-sm font-medium rounded-xl hover:bg-red-600">
+                        class="w-full px-4 py-2.5 bg-red-500 text-white text-sm font-medium rounded-xl hover:bg-red-600">
                     Yes, Logout
                 </button>
             </form>
@@ -208,9 +256,28 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script>
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    function initializeDataTables() {
+        if (!window.jQuery || !jQuery.fn.DataTable) return;
+
+        jQuery('table.datatable').each(function() {
+            if (jQuery.fn.DataTable.isDataTable(this)) {
+                return;
+            }
+
+            jQuery(this).DataTable({
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+                order: [],
+                autoWidth: false,
+            });
+        });
+    }
 
     function openSidebar() {
         if (!sidebar) return;
@@ -296,6 +363,8 @@
             document.getElementById('notification-dropdown')?.classList.add('hidden');
         }
     });
+
+    window.addEventListener('load', initializeDataTables);
 </script>
 
 </body>

@@ -50,7 +50,7 @@
                           class="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none">{{ $certificateRequest->admin_notes }}</textarea>
             </div>
             <div class="p-4 bg-blue-50 rounded-lg text-sm text-blue-700">
-                Setting status to <strong>Ready for Pickup</strong> will automatically send an email and SMS notification to the resident.
+                Changing status to <strong>Ready for Pickup</strong> will automatically send an email and SMS notification to the requesting resident.
             </div>
             <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
                 Update Status

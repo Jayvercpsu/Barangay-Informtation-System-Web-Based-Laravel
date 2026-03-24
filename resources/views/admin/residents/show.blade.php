@@ -145,7 +145,7 @@
         </div>
         @if($resident->complaints->count())
         <div class="overflow-x-auto">
-        <table class="w-full text-sm min-w-[860px]">
+        <table class="datatable w-full text-sm min-w-[860px]">
             <thead>
                 <tr class="bg-gray-50">
                     <th class="text-left px-6 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Number</th>
@@ -189,7 +189,7 @@
         </div>
         @if($resident->certificateRequests->count())
         <div class="overflow-x-auto">
-        <table class="w-full text-sm min-w-[900px]">
+        <table class="datatable w-full text-sm min-w-[900px]">
             <thead>
                 <tr class="bg-gray-50">
                     <th class="text-left px-6 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Number</th>

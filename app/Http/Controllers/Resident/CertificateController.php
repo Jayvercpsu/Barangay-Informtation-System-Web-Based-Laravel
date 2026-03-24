@@ -14,7 +14,7 @@ class CertificateController extends Controller
     public function index()
     {
         $resident = Auth::user()->resident;
-        $requests = $resident->certificateRequests()->latest()->paginate(10);
+        $requests = $resident->certificateRequests()->latest()->get();
         return view('resident.certificates.index', compact('requests'));
     }
 

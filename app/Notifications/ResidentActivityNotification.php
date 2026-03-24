@@ -14,7 +14,8 @@ class ResidentActivityNotification extends Notification
      *   title:string,
      *   message:string,
      *   link:string,
-     *   category?:string
+     *   category?:string,
+     *   reminder_key?:string
      * } $payload
      */
     public function __construct(private array $payload) {}
@@ -32,11 +33,17 @@ class ResidentActivityNotification extends Notification
      */
     public function toDatabase(object $notifiable): array
     {
-        return [
+        $data = [
             'title' => $this->payload['title'],
             'message' => $this->payload['message'],
             'link' => $this->payload['link'],
             'category' => $this->payload['category'] ?? 'resident_activity',
         ];
+
+        if (isset($this->payload['reminder_key'])) {
+            $data['reminder_key'] = $this->payload['reminder_key'];
+        }
+
+        return $data;
     }
 }
