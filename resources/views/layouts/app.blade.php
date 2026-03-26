@@ -266,15 +266,36 @@
         if (!window.jQuery || !jQuery.fn.DataTable) return;
 
         jQuery('table.datatable').each(function() {
+            const $table = jQuery(this);
+
+            // DataTables does not support colspan rows in tbody.
+            // Remove Blade fallback rows and pass their message to DataTables empty state.
+            const $tbody = $table.find('tbody');
+            const $placeholderCell = $tbody.find('tr:first-child > td[colspan]').first();
+            if (
+                $placeholderCell.length &&
+                $tbody.find('tr').length === 1 &&
+                $tbody.find('tr:first-child td').length === 1
+            ) {
+                const emptyMessage = $placeholderCell.text().trim();
+                $tbody.empty();
+                if (emptyMessage) {
+                    $table.attr('data-empty-message', emptyMessage);
+                }
+            }
+
             if (jQuery.fn.DataTable.isDataTable(this)) {
                 return;
             }
 
-            jQuery(this).DataTable({
+            $table.DataTable({
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
                 order: [],
                 autoWidth: false,
+                language: {
+                    emptyTable: $table.attr('data-empty-message') || 'No data available in table',
+                },
             });
         });
     }
